@@ -258,9 +258,12 @@ static int qdma_ethdev_online(struct rte_eth_dev *dev)
 	qmda_mbox_compose_vf_online(qdma_dev->func_id, 0, &qbase, m->raw_data);
 
 	rv = qdma_mbox_msg_send(dev, m, MBOX_OP_RSP_TIMEOUT);
-	if (rv < 0)
+	if (rv < 0) {
 		PMD_DRV_LOG(ERR, "%x, send hello failed %d.\n",
 			    qdma_dev->func_id, rv);
+		qdma_mbox_msg_free(m);
+		return rv;
+	}
 
 	rv = qdma_mbox_vf_dev_info_get(m->raw_data,
 				&qdma_dev->dev_cap,
@@ -269,9 +272,8 @@ static int qdma_ethdev_online(struct rte_eth_dev *dev)
 	if (rv < 0)
 		PMD_DRV_LOG(ERR, "%x, failed to get dev info %d.\n",
 				qdma_dev->func_id, rv);
-	else {
-		qdma_mbox_msg_free(m);
-	}
+
+	qdma_mbox_msg_free(m);
 	return rv;
 }
 
